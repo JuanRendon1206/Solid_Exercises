@@ -1,0 +1,436 @@
+//ORDER, EXERCISE 1
+
+public static void main(String[] args) {
+    CalculateTotalPrice totalCalculator = new CalculateTotalPrice();
+
+    //Orden falsa:
+    Order order = new Order(
+        Arrays.asList("Item1", "Item2", "Item3"),
+        Arrays.asList(10.0, 20.0, 30.0),
+        totalCalculator
+    );
+    
+    OrderPrinter orderPrinter = new OrderPrinter();
+    orderPrinter.printOrder(order);
+
+    SaveOrderToDatabase orderRepository = new SaveOrderToDatabase();
+    orderRepository.saveToDatabase(order);
+
+    List<Order> allOrders = orderRepository.getAllOrders();
+    System.out.println("All Orders in Database:");
+    for (Order savedOrder : allOrders) {
+        orderPrinter.printOrder(savedOrder);
+    }
+}
+
+package order;
+import java.util.List;
+
+public class Order {
+    
+    private List<String> items;
+    private List<Double> prices;
+    private double totalAmount; 
+
+    //Constructor
+    public Order(List<String> items, List<Double> prices, CalculateTotalPrice totalCalculator) {
+        this.items = items;
+        this.prices = prices;
+        this.totalAmount = CalculateTotalPrice.calculateTotal(items, prices);
+    }
+
+    //Getters and Setters
+    public List<String> getItems() {
+        return items;
+    }
+
+    public void setItems(List<String> items) {
+        this.items = items;
+    }
+
+    public double getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public List<Double> getPrices() {
+        return prices;
+    }
+
+    public void setPrices(List<Double> prices) {
+        this.prices = prices;
+    }
+}
+
+package order;
+
+import java.util.List;
+
+public class CalculateTotalPrice {
+    
+    public static double calculateTotal(List<String> items, List<Double> prices){
+        
+        if(items.size() != prices.size()){
+            throw new IllegalArgumentException("Items and prices lists must have the same size");
+        }
+
+        double total = 0;
+        for (int i = 0; i < items.size(); i++) {
+            total += prices.get(i);
+        }
+        return total;
+
+    }
+}
+
+package order;
+
+import java.util.List;
+
+public class OrderPrinter {
+
+    public void printOrder(Order order){
+        System.out.println("Order Items:");
+
+        List<String> items = order.getItems();
+        List<Double> prices = order.getPrices();
+
+        for(int i = 0; i < items.size(); i++){
+            System.out.println("Item: " + items.get(i) + " - price: " + prices.get(i));
+        }
+        
+        System.out.println("Total amount: $" + order.getTotalAmount());
+    }   
+}
+
+package order;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class SaveOrderToDatabase {
+    
+    private List<Order> database = new ArrayList<>();
+
+    public void saveToDatabase(Order order) {
+        
+        System.out.println("Saving order to database...");
+        database.add(order);
+        System.out.println("Order saved to database successfully.");
+    }
+
+    public List<Order> getAllOrders() {
+        return database;
+    }
+}
+
+
+//METODOS DE PAGO: EXERCISE: 2
+
+public interface PaymentMethod {
+    void processPayment(double amount);
+}
+
+public class CreditCardPayment implements PaymentMethod {
+    private String cardNumber;
+    private String cardHolder;
+    private String expiryDate;
+    private String cvv;
+
+    public CreditCardPayment(String cardNumber, String cardHolder, String expiryDate, String cvv) {
+        this.cardNumber = cardNumber;
+        this.cardHolder = cardHolder;
+        this.expiryDate = expiryDate;
+        this.cvv = cvv;
+    }
+
+    @Override
+    public void processPayment(double amount) {
+        // Lógica para procesar el pago con tarjeta de crédito
+        System.out.println("Processing credit card payment of $" + amount);
+
+        if (validateCard()) {
+            System.out.println("Credit card payment of $" + amount + " processed successfully.");
+        } else {
+            System.out.println("Credit card payment failed.");
+        }
+    }
+
+    private boolean validateCard() {
+
+        return !cardNumber.isEmpty() && !cardHolder.isEmpty() && !expiryDate.isEmpty() && !cvv.isEmpty();
+    }
+}
+
+public class PayPalPayment implements PaymentMethod {
+    private String email;
+    private String password;
+
+    public PayPalPayment(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
+    @Override
+    public void processPayment(double amount) {
+        // Lógica para procesar el pago con PayPal
+        System.out.println("Processing PayPal payment of $" + amount);
+
+        if (authenticate()) {
+            System.out.println("PayPal payment of $" + amount + " processed successfully.");
+        } else {
+            System.out.println("PayPal payment failed.");
+        }
+    }
+
+    private boolean authenticate() {
+
+        return !email.isEmpty() && !password.isEmpty();
+    }
+}
+
+public class PaymentProcessor {
+    private PaymentMethod paymentMethod;
+
+    public PaymentProcessor(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public void processPayment(double amount) {
+        paymentMethod.processPayment(amount);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // Pago con tarjeta de crédito
+        PaymentMethod creditCardPayment = new CreditCardPayment("1234-5678-9876-5432", "John Doe", "12/25", "123");
+        PaymentProcessor creditCardProcessor = new PaymentProcessor(creditCardPayment);
+        creditCardProcessor.processPayment(250.75);
+
+        // Pago con PayPal
+        PaymentMethod payPalPayment = new PayPalPayment("user@example.com", "securepassword");
+        PaymentProcessor payPalProcessor = new PaymentProcessor(payPalPayment);
+        payPalProcessor.processPayment(125.50);
+    }
+}
+
+//WORKER, EXERCISE: 3
+
+public interface Workable {
+    void work();
+}
+
+public interface Eatable {
+    void eat();
+}
+
+public class HumanWorker implements Workable, Eatable {
+    private String name;
+
+    public HumanWorker(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void work() {
+        System.out.println(name + " is working.");
+        // Lógica específica para trabajar como humano
+    }
+
+    @Override
+    public void eat() {
+        System.out.println(name + " is eating.");
+        // Lógica específica para comer como humano
+    }
+}
+
+public class RobotWorker implements Workable {
+    private String serialNumber;
+
+    public RobotWorker(String serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    @Override
+    public void work() {
+        System.out.println("Robot " + serialNumber + " is working.");
+        // Lógica específica para trabajar como robot
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Workable humanWorker = new HumanWorker("John");
+        humanWorker.work();
+        ((Eatable) humanWorker).eat(); // Casting para usar eat() en HumanWorker
+
+        Workable robotWorker = new RobotWorker("R2D2");
+        robotWorker.work();
+
+        // Intentar usar eat() en RobotWorker provocaría una excepción UnsupportedOperationException
+    }
+}
+
+//DATABASE: EXERCISE :4
+
+public interface DataStorage {
+    void save(String data);
+}
+
+public class Database implements DataStorage {
+    @Override
+    public void save(String data) {
+        System.out.println("Saving data to database: " + data);
+        // Lógica específica para guardar datos en la base de datos
+    }
+}
+
+public class DataService {
+    private DataStorage dataStorage;
+
+    // Inyección de dependencia a través del constructor
+    public DataService(DataStorage dataStorage) {
+        this.dataStorage = dataStorage;
+    }
+
+    public void saveData(String data) {
+        dataStorage.save(data);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // Uso con Database
+        DataStorage databaseStorage = new Database();
+        DataService databaseService = new DataService(databaseStorage);
+        databaseService.saveData("Hello, database!");
+
+        // Uso con otra implementación de DataStorage (ejemplo ficticio)
+        // DataStorage otherStorage = new OtherStorageImplementation();
+        // DataService otherService = new DataService(otherStorage);
+        // otherService.saveData("Hello, other storage!");
+    }
+}
+
+//EMPLOYEE EXERCISE: 5
+
+public class PayrollService {
+    public double calculatePay(Employee employee) {
+        // Lógica para calcular el salario
+        double salary = employee.getSalary();
+        // Aquí puede incluirse cualquier lógica adicional como cálculos de bonificaciones, deducciones, etc.
+        return salary;
+    }
+}
+
+public class EmployeeReport {
+    public void generateReport(Employee employee) {
+        // Lógica para generar el reporte del empleado
+        System.out.println("Employee Report:");
+        System.out.println("Name: " + employee.getName());
+        System.out.println("Salary: " + employee.getSalary());
+        // Puede agregar más detalles según sea necesario
+    }
+}
+
+public class EmployeeRepository {
+    private Database database = new Database(); // Usamos la clase Database del ejercicio anterior
+
+    public void saveToDatabase(Employee employee) {
+        // Lógica para guardar el empleado en la base de datos
+        String employeeData = "Name: " + employee.getName() + ", Salary: " + employee.getSalary();
+        database.save(employeeData);
+    }
+}
+
+public class Employee {
+    private String name;
+    private double salary;
+
+    public Employee(String name, double salary) {
+        this.name = name;
+        this.salary = salary;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Employee employee = new Employee("John Doe", 3000.0);
+
+        PayrollService payrollService = new PayrollService();
+        double calculatedPay = payrollService.calculatePay(employee);
+        System.out.println("Calculated pay for " + employee.getName() + ": " + calculatedPay);
+
+        EmployeeReport employeeReport = new EmployeeReport();
+        employeeReport.generateReport(employee);
+
+        EmployeeRepository employeeRepository = new EmployeeRepository();
+        employeeRepository.saveToDatabase(employee);
+    }
+}
+
+//TAXCALCULATOR EXERCISE: 6
+
+public interface TaxStrategy {
+    double calculateTax(double income);
+}
+
+public class USTaxStrategy implements TaxStrategy {
+    @Override
+    public double calculateTax(double income) {
+        // Lógica para calcular el impuesto en USA
+        return income * 0.1; // Suponiendo un impuesto del 10%
+    }
+}
+
+public class UKTaxStrategy implements TaxStrategy {
+    @Override
+    public double calculateTax(double income) {
+        // Lógica para calcular el impuesto en UK
+        return income * 0.2; // Suponiendo un impuesto del 20%
+    }
+}
+
+public class TaxCalculator {
+    private TaxStrategy taxStrategy;
+
+    public TaxCalculator(TaxStrategy taxStrategy) {
+        this.taxStrategy = taxStrategy;
+    }
+
+    public double calculateTax(double income) {
+        return taxStrategy.calculateTax(income);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        TaxStrategy usTaxStrategy = new USTaxStrategy();
+        TaxStrategy ukTaxStrategy = new UKTaxStrategy();
+
+        TaxCalculator taxCalculator = new TaxCalculator(usTaxStrategy);
+
+        double income = 10000.0;
+        double taxToPay = taxCalculator.calculateTax(income);
+
+        System.out.println("Tax to pay in USA: " + taxToPay);
+
+        // Cambiando la estrategia de impuestos
+        taxCalculator = new TaxCalculator(ukTaxStrategy);
+        taxToPay = taxCalculator.calculateTax(income);
+
+        System.out.println("Tax to pay in UK: " + taxToPay);
+    }
+}
